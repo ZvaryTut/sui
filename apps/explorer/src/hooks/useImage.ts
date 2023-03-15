@@ -11,25 +11,44 @@ interface UseImageProps {
     moderate?: boolean;
 }
 
-export function useImage({ src, moderate = false }: UseImageProps) {
+export const isURL = (url: string = '') => {
+    try {
+        new URL(url);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
+export function useImage({ src, moderate = true }: UseImageProps) {
     const [status, setStatus] = useState<Status>('loading');
-    const formatted = src.replace(/^ipfs:\/\//, 'https://ipfs.io/ipfs/');
-    const { data: allowed, isFetched } = useImageMod({ url: formatted });
+    const formatted = src?.replace(/^ipfs:\/\//, 'https://ipfs.io/ipfs/');
+    const { data: allowed, isFetched } = useImageMod({
+        url: formatted,
+    });
+
     const ref = useRef<HTMLImageElement | null>(null);
 
     useEffect(() => {
+        // todo: this is a little bit of a late night hack
+        if (!isURL(src)) {
+            setStatus('failed');
+            return;
+        }
         const img = new globalThis.Image();
         ref.current = img;
         img.src = src;
-        img.onload = () => !moderate && setStatus('loaded');
+        img.onload = () => setStatus('loaded');
         img.onerror = () => setStatus('failed');
-    });
+    }, [src, moderate]);
 
     useEffect(() => {
-        if (moderate && isFetched) setStatus('loaded');
-    }, [moderate, isFetched]);
+        if (ref.current?.complete && isFetched) {
+            setStatus('loaded');
+        }
+    }, [ref.current?.complete, allowed, isFetched]);
 
-    return { url: formatted, nsfw: moderate && !allowed, status };
+    return { nsfw: !allowed, url: formatted, status, ref };
 }
 
 export default useImage;

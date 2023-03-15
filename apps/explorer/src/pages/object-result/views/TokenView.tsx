@@ -1,7 +1,6 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { ArrowRight12 } from '@mysten/icons';
 import { normalizeSuiAddress } from '@mysten/sui.js';
 import { useState, useEffect } from 'react';
 
@@ -19,9 +18,7 @@ import { type DataType } from '../ObjectResultType';
 import styles from './ObjectView.module.css';
 
 import { TransactionsForAddress } from '~/components/transactions/TransactionsForAddress';
-import { useImageMod } from '~/hooks/useImageMod';
 import { DescriptionList, DescriptionItem } from '~/ui/DescriptionList';
-import { Heading } from '~/ui/Heading';
 import { AddressLink, ObjectLink, TransactionLink } from '~/ui/InternalLink';
 import { Link } from '~/ui/Link';
 import { ObjectDetails } from '~/ui/ObjectDetails';
@@ -65,8 +62,6 @@ export function TokenView({ data }: { data: DataType }) {
         const address = normalizeSuiAddress(metadataarr[0]);
         return `/object/${address}?module=${metadataarr[1]}`;
     };
-
-    const { data: allowed } = useImageMod({ url: data });
 
     return (
         <div className="flex flex-col flex-nowrap gap-14">
@@ -166,57 +161,18 @@ export function TokenView({ data }: { data: DataType }) {
                             {imgUrl !== '' && (
                                 <div className="border-0 border-t border-solid border-gray-45 pt-6 md:basis-1/3 md:border-t-0 md:pl-10">
                                     <div className="flex flex-row flex-nowrap gap-5">
-                                        <div className="flex w-40 justify-center md:w-50">
-                                            {data.url && (
-                                                <div
-                                                    className={
-                                                        styles.displaycontainer
-                                                    }
-                                                >
-                                                    <ObjectDetails
-                                                        image={data.url}
-                                                        name={
-                                                            name ||
-                                                            trimStdLibPrefix(
-                                                                data.objType
-                                                            )
-                                                        }
-                                                        type={fileType!}
-                                                        variant="large"
-                                                        nsfw={!allowed}
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col justify-center gap-2.5">
-                                            {name && (
-                                                <Heading
-                                                    variant="heading4/semibold"
-                                                    color="gray-90"
-                                                >
-                                                    {name}
-                                                </Heading>
-                                            )}
-                                            {fileType && (
-                                                <Text
-                                                    variant="bodySmall/medium"
-                                                    color="steel-darker"
-                                                >
-                                                    {fileType}
-                                                </Text>
-                                            )}
-                                            <div>
-                                                <Link
-                                                    size="captionSmall"
-                                                    uppercase
-                                                    onClick={handlePreviewClick}
-                                                    after={
-                                                        <ArrowRight12 className="-rotate-45" />
-                                                    }
-                                                >
-                                                    Preview
-                                                </Link>
-                                            </div>
+                                        <div className="flex justify-center">
+                                            <ObjectDetails
+                                                image={imgUrl}
+                                                name={
+                                                    name ||
+                                                    trimStdLibPrefix(
+                                                        data.objType
+                                                    )
+                                                }
+                                                type={fileType!}
+                                                variant="large"
+                                            />
                                         </div>
                                     </div>
                                 </div>
