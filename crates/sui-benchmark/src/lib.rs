@@ -200,7 +200,7 @@ impl ExecutionEffects {
         let gas_used = self.gas_used();
         let net_gas_used = self.net_gas_used();
 
-        info!(
+        println!(
             "Summary:\n\
              Gas Object: {gas_object:?}\n\
              Sender: {sender:?}\n\

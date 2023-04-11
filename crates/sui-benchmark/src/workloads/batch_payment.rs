@@ -14,6 +14,7 @@ use std::sync::Arc;
 use sui_core::test_utils::make_pay_sui_transaction;
 use sui_types::base_types::{ObjectID, SequenceNumber};
 use sui_types::digests::ObjectDigest;
+use sui_types::gas_coin::MIST_PER_SUI;
 use sui_types::object::Owner;
 use sui_types::{
     base_types::{ObjectRef, SuiAddress},
@@ -25,7 +26,7 @@ use tracing::{debug, error};
 /// Value of each address's "primary coin" in mist. The first transaction gives
 /// each address a coin worth PRIMARY_COIN_VALUE, and all subsequent transfers
 /// send TRANSFER_AMOUNT coins each time
-const PRIMARY_COIN_VALUE: u64 = 100_000_000_000;
+const PRIMARY_COIN_VALUE: u64 = 100 * MIST_PER_SUI;
 
 /// Number of mist sent to each address on each batch transfer
 const BATCH_TRANSFER_AMOUNT: u64 = 1;
@@ -167,7 +168,7 @@ impl WorkloadBuilder<dyn Payload> for BatchPaymentWorkloadBuilder {
         let amount = (PRIMARY_COIN_VALUE * (self.batch_size + 1) as u64)
             + ESTIMATED_COMPUTATION_COST
             + (STORAGE_COST_PER_COIN * self.batch_size as u64);
-        debug!(
+        println!(
             "Creating gas coins for batch payload {} coin(s) of balance {amount}",
             self.num_payloads
         );
@@ -215,7 +216,7 @@ impl Workload<dyn Payload> for BatchPaymentWorkload {
         system_state_observer: Arc<SystemStateObserver>,
     ) -> Vec<Box<dyn Payload>> {
         let mut gas_by_address: HashMap<SuiAddress, Vec<Gas>> = HashMap::new();
-        debug!(
+        println!(
             "Making test payloads with {} payload gas...",
             self.payload_gas.len()
         );
@@ -233,7 +234,7 @@ impl Workload<dyn Payload> for BatchPaymentWorkload {
 
         let mut payloads = Vec::new();
 
-        debug!(
+        println!(
             "Creating {} senders & {} recipients per sender...",
             gas_by_address.len(),
             self.batch_size

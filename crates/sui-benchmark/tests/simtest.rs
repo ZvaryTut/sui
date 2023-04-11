@@ -278,9 +278,7 @@ mod test {
             Arc::new(get_ed25519_keypair_from_keystore(keystore_path, &sender).unwrap());
         let all_gas = get_sui_gas_object_with_wallet_context(context, &sender).await;
         let (_, gas) = all_gas.get(0).unwrap();
-        let (_move_struct, pay_coin) = all_gas.get(1).unwrap();
-        let primary_gas = (gas.clone(), sender, ed25519_keypair.clone());
-        let pay_coin = (pay_coin.clone(), sender, ed25519_keypair.clone());
+        let primary_coin = (gas.clone(), sender, ed25519_keypair.clone());
 
         let registry = prometheus::Registry::new();
         let proxy: Arc<dyn ValidatorProxy + Send + Sync> = Arc::new(
@@ -288,7 +286,7 @@ mod test {
                 .await,
         );
 
-        let bank = BenchmarkBank::new(proxy.clone(), primary_gas, vec![pay_coin]);
+        let bank = BenchmarkBank::new(proxy.clone(), primary_coin);
         let system_state_observer = {
             let mut system_state_observer = SystemStateObserver::new(proxy.clone());
             if let Ok(_) = system_state_observer.state.changed().await {
