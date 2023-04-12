@@ -8,6 +8,7 @@ use fastcrypto::encoding::{decode_bytes_hex, Base64, Encoding};
 use fastcrypto::hash::HashFunction;
 use fastcrypto::rsa::{Base64UrlUnpadded, Encoding as OtherEncoding};
 use fastcrypto::traits::{KeyPair, ToFromBytes};
+use fastcrypto_zkp::bn254::poseidon::PoseidonWrapper;
 use rand::Rng;
 use shared_crypto::intent::{Intent, IntentMessage};
 use signature::rand_core::OsRng;
@@ -134,10 +135,6 @@ pub enum KeyToolCommand {
         max_epoch: u64,
     },
 
-    // GenerateGroth16Proof {
-    //     #[clap(long)]
-    //     jwt_token: u64,
-    // },
     GenerateOpenIdAuthenticatorAddress {
         #[clap(long)]
         verifying_key_path: PathBuf,
@@ -338,25 +335,12 @@ impl KeyToolCommand {
 
             KeyToolCommand::LogInFlow { max_epoch } => {
                 let kp: Ed25519KeyPair = get_key_pair().1;
-                // change this to poseidon
-                let mut nonce = DefaultHash::default();
-                // split pk into two chunks
-                nonce.update(kp.public().as_bytes());
-                nonce.update(max_epoch.to_be_bytes());
-                // 31 bytes of randomness
-                nonce.update(OsRng.gen::<u32>().to_be_bytes());
-                println!("Nonce: {:?}", nonce.finalize().digest);
+                let mut poseidon = PoseidonWrapper::new(3);
+                let pk_bytes = kp.public().as_bytes();
+                let hash = poseidon.hash(&[&pk_bytes[..16], &pk_bytes[16..], &max_epoch.to_be_bytes()]);
+                println!("Nonce: {:?}", hash.digest);
             }
 
-            // KeyToolCommand::GenerateGroth16Proof { jwt_token } => {
-            //     todo!()
-            //     // call js and generate:
-            //     // zk required inputs:
-            //     // vk, pk, proof
-            //     // public_inputs (7): jwt_sha2_hash[2], masked_content_hash, nonce, eph_public_key[2], max_epoch
-            //     //
-            //     // aux inputs: masked_content, jwt_signature
-            // }
             KeyToolCommand::GenerateOpenIdAuthenticatorAddress { verifying_key_path } => {
                 let vk = SerializedVerifyingKey::from_fp(verifying_key_path.to_str().unwrap());
                 println!("Sui Address: {:?}", SuiAddress::from(&vk));

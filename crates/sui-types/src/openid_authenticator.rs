@@ -75,7 +75,7 @@ impl SerializedVerifyingKey {
 pub struct PublicInputs {
     jwt_hash: Vec<u8>,
     pub masked_content_hash: Vec<u8>,
-    nonce: Vec<u8>,
+    nonce: String,
     eph_public_key: Vec<u8>,
     max_epoch: EpochId,
     pub payload_index: u64,
@@ -122,11 +122,8 @@ impl PublicInputs {
             .1;
         println!("!!masked_content_hash={:?}", masked_content_hash);
 
-        let nonce = BigInt::from_str(&inputs[8].to_string())
-            .unwrap()
-            .to_bytes_be()
-            .1;
-        println!("!!nonce={:?}", Hex::encode(&nonce));
+        let nonce = inputs[8].to_string();
+        println!("!!nonce={:?}", nonce);
 
         Self {
             jwt_hash,
@@ -134,10 +131,7 @@ impl PublicInputs {
                 .unwrap()
                 .to_bytes_be()
                 .1,
-            nonce: BigInt::from_str(&inputs[8].to_string())
-                .unwrap()
-                .to_bytes_be()
-                .1,
+            nonce: inputs[8].to_string(),
             eph_public_key,
             max_epoch: BigInt::from_str(&inputs[7].to_string())
                 .unwrap()
@@ -300,6 +294,11 @@ impl AuthenticatorTrait for OpenIdAuthenticator {
         if self.public_inputs.max_epoch < epoch.unwrap_or(0) {
             return Err(SuiError::InvalidAuthenticator);
         }
+
+        if self.public_inputs.nonce != self.masked_content.nonce {
+            return Err(SuiError::InvalidAuthenticator);
+        }
+
         println!("Verified epoch");
         // Verify the foundation signature indeed commits to the OAuth provider content,
         // that is, a list of valid pubkeys available at https://www.googleapis.com/oauth2/v3/certs.
@@ -324,14 +323,14 @@ impl AuthenticatorTrait for OpenIdAuthenticator {
         }
         println!("Verified bulletin signature");
         // Verify the JWT signature against the OAuth provider public key.
-        let sig = RSASignature::from_bytes(&self.jwt_signature)?;
+        let sig = RSASignature::from_bytes(&self.jwt_signature).unwrap();
         let mut verified = false;
         for info in self.bulletin.iter() {
             if info.kid == self.masked_content.header.kid && info.iss == self.masked_content.iss {
                 let pk = RSAPublicKey::from_raw_components(
                     &Base64UrlUnpadded::decode_vec(&info.n).unwrap(),
                     &Base64UrlUnpadded::decode_vec(&info.e).unwrap(),
-                )?;
+                ).unwrap();
                 if pk
                     .verify_prehash(self.public_inputs.get_jwt_hash(), &sig)
                     .is_ok()
@@ -349,7 +348,7 @@ impl AuthenticatorTrait for OpenIdAuthenticator {
 
         // Verify the user signature over the transaction data
         let res = self.user_signature.verify_secure(intent_msg, author);
-        print!("Verified user signature {:?}", res);
+        println!("Verified user signature {:?}", res);
         if res.is_err() {
             return Err(SuiError::InvalidSignature {
                 error: "User signature verify failed".to_string(),
