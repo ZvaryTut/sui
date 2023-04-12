@@ -1,6 +1,7 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+use super::AuxInputs;
 use crate::{
     base_types::SuiAddress,
     crypto::{get_key_pair_from_rng, DefaultHash, Signature, SignatureScheme, SuiKeyPair},
@@ -13,6 +14,7 @@ use crate::{
 };
 use fastcrypto::hash::HashFunction;
 use fastcrypto::rsa::{Base64UrlUnpadded, Encoding as OtherEncoding};
+use once_cell::sync::OnceCell;
 use rand::{rngs::StdRng, SeedableRng};
 use shared_crypto::intent::{Intent, IntentMessage, IntentScope};
 
@@ -78,7 +80,8 @@ fn openid_authenticator_scenarios() {
         jwt_signature: Base64UrlUnpadded::decode_vec("AJeq5jbqmPxu8_YoT0jKk4CVUsLajuA4tCaPKTq-iuaT7zkKRU1VOS3ETFP1e3fD1gLM3lYIWBxCVHYYvO9YaVlD542Hszbiire8VgfzB0w3xoUDTFYD8CURDYeGxWCFOUtMG72peVDWNiZh14beHIj42upBRmK7gxp0R569N2ifnimq8jO0y1oBcMXytKkFkHk0BGSHqcLVUtWt9dn9-zkfmuY0SU8vzwy113AErBDEhZmXy6PhfXmDrGZno0ci6GYZxWpRouuPXFg3zojMvdkJIlJfnCZcbcp1eS_0d33gxb951y7IA4xzeb9y1LQNRvj3_QuAv9us6Sal9J3YjQ").unwrap(),
         user_signature: s.clone(),
         bulletin_signature: bulletin_sig,
-        bulletin: example_bulletin
+        bulletin: example_bulletin,
+        bytes: OnceCell::new()
     };
 
     assert!(authenticator
@@ -94,7 +97,10 @@ fn openid_authenticator_scenarios() {
 }
 
 #[test]
-fn test_authenticator_failure() {}
+fn test_authenticator_failure() {
+    let aux = AuxInputs::from_fp("./src/unit_tests/aux.json");
+    println!("aux: {:?}", aux);
+}
 
 #[test]
 fn test_serde_roundtrip() {}
